@@ -362,6 +362,7 @@ class RemoteOperations:
         self.__domainHandle = None
         self.__domainName = None
         self.__domainSid = None
+        self.__domainDn = None
 
         self.__drsr = None
         self.__hDrs = None
@@ -497,6 +498,7 @@ class RemoteOperations:
 
         if resp['pmsgOut']['V2']['cItems'] > 0:
             self.__NtdsDsaObjectGuid = resp['pmsgOut']['V2']['rItems'][0]['NtdsDsaObjectGuid']
+            self.__domainDn = ",".join(filter(lambda x: x.startswith("DC="), resp['pmsgOut']['V2']['rItems'][0]['NtdsDsaObjectName'].split(",")))
         else:
             LOG.error("Couldn't get DC info for domain %s" % self.__domainName)
             raise Exception('Fatal, aborting')
@@ -530,8 +532,8 @@ class RemoteOperations:
         dsName['SidLen'] = 0
         dsName['Guid'] = string_to_bin(userEntry[1:-1])
         dsName['Sid'] = ''
-        dsName['NameLen'] = 0
-        dsName['StringName'] = ('\x00')
+        dsName['NameLen'] = len(self.__domainDn)
+        dsName['StringName'] = self.__domainDn+'\x00'
 
         dsName['structLen'] = len(dsName.getData())
 
@@ -553,7 +555,7 @@ class RemoteOperations:
             self.__ppartialAttrSet['cAttrs'] = len(NTDSHashes.ATTRTYP_TO_ATTID)
             for attId in list(NTDSHashes.ATTRTYP_TO_ATTID.values()):
                 self.__ppartialAttrSet['rgPartialAttr'].append(drsuapi.MakeAttid(self.__prefixTable , attId))
-        request['pmsgIn']['V8']['pPartialAttrSet'] = self.__ppartialAttrSet
+        request['pmsgIn']['V8']['pPartialAttrSet'] = NULL
         request['pmsgIn']['V8']['PrefixTableDest']['PrefixCount'] = len(self.__prefixTable)
         request['pmsgIn']['V8']['PrefixTableDest']['pPrefixEntry'] = self.__prefixTable
         request['pmsgIn']['V8']['pPartialAttrSetEx1'] = NULL
