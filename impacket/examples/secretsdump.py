@@ -2246,6 +2246,8 @@ class NTDSHashes:
                 NTHistory = []
 
             rid = unpack('<L', record['pmsgOut'][replyVersion]['pObjects']['Entinf']['pName']['Sid'][-4:])[0]
+            LMHash = ntlm.LMOWFv1('', '')
+            NTHash = ntlm.NTOWFv1('', '')
 
             for attr in record['pmsgOut'][replyVersion]['pObjects']['Entinf']['AttrBlock']['pAttr']:
                 try:
